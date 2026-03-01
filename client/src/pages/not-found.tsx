@@ -1,21 +1,36 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { FileQuestion, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
-          </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="text-center max-w-md"
+      >
+        <div className="inline-flex items-center justify-center p-4 bg-muted rounded-full mb-6">
+          <FileQuestion className="w-12 h-12 text-muted-foreground" />
+        </div>
+        
+        <h1 className="text-4xl font-semibold mb-3 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+          Page Not Found
+        </h1>
+        
+        <p className="text-lg text-muted-foreground mb-10">
+          The page you're looking for doesn't exist or has been moved to another coordinate.
+        </p>
 
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
+        <Link 
+          href="/" 
+          className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md shadow-primary/20"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Return Home
+        </Link>
+      </motion.div>
     </div>
   );
 }
