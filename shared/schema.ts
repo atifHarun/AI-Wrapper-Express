@@ -17,20 +17,34 @@ export const AutonomyLevelEnum = z.enum([
 ]);
 
 export const analyzeRequestSchema = z.object({
-  useCaseName: z.string().min(1, "Use case name is required"),
+  useCaseName: z.string().min(1, "The name of the specific AI implementation is required."),
   systemType: SystemTypeEnum,
+  primaryFunction: z.string().optional(),
   contextOfUse: z.object({
     industry: z.string().min(1, "Industry is required"),
     environment: EnvironmentEnum,
   }),
-  modelAutonomyLevel: AutonomyLevelEnum,
-  primaryFunction: z.string().optional(),
-  stakeholders: z.string().optional(),
-  decisionsAndActions: z.string().optional(),
-  dataInputs: z.object({
-    personalOrSensitiveData: z.boolean(),
+  stakeholders: z.object({
+    primaryUsers: z.array(z.string()).optional(),
+    indirectlyAffectedParties: z.array(z.string()).optional(),
+    oversightOwners: z.array(z.string()).optional(),
   }).optional(),
-  scaleAndReach: z.string().optional(),
+  decisionsAndActions: z.object({
+    decisionsMadeBySystem: z.array(z.string()).optional(),
+    actionsExecutedAutomatically: z.array(z.string()).optional(),
+    actionsRequiringHumanApproval: z.array(z.string()).optional(),
+  }).optional(),
+  dataInputs: z.object({
+    dataTypesUsed: z.array(z.string()).optional(),
+    dataSources: z.array(z.string()).optional(),
+    personalOrSensitiveData: z.boolean().optional(),
+  }).optional(),
+  modelAutonomyLevel: AutonomyLevelEnum,
+  scaleAndReach: z.object({
+    expectedNumberOfUsers: z.string().optional(),
+    frequencyOfUse: z.string().optional(),
+    geographicScope: z.string().optional(),
+  }).optional(),
 });
 
 export type AnalyzeRequest = z.infer<typeof analyzeRequestSchema>;

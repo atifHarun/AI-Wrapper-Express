@@ -10,23 +10,37 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
-import { Loader2, FileJson, ShieldCheck, AlertCircle, Copy, Check } from "lucide-react";
+import { Loader2, FileJson, ShieldCheck, AlertCircle, Copy, Check, Sparkles } from "lucide-react";
 
 const SAMPLE_JSON = {
-  useCaseName: "Customer Support Chatbot",
-  systemType: "Text-based conversational AI",
-  contextOfUse: {
-    industry: "Retail",
-    environment: "Customer-facing"
+  "useCaseName": "Customer Support Chatbot",
+  "systemType": "Text-based conversational AI",
+  "primaryFunction": "Answering FAQs and providing product tracking information.",
+  "contextOfUse": {
+    "industry": "Retail",
+    "environment": "Customer-facing"
   },
-  modelAutonomyLevel: "Recommendation with human decision",
-  primaryFunction: "Answering FAQs and providing product tracking information.",
-  stakeholders: "Customers, support agents, retail managers.",
-  decisionsAndActions: "Suggests responses to agents; provides direct links to customers.",
-  dataInputs: {
-    personalOrSensitiveData: true
+  "stakeholders": {
+    "primaryUsers": ["Customers", "Support Agents"],
+    "indirectlyAffectedParties": ["Retail Managers"],
+    "oversightOwners": ["Compliance Team"]
   },
-  scaleAndReach: "National customer base, approximately 1 million users per month."
+  "decisionsAndActions": {
+    "decisionsMadeBySystem": ["Identifying user intent", "Selecting best FAQ response"],
+    "actionsExecutedAutomatically": ["Displaying tracking status"],
+    "actionsRequiringHumanApproval": ["Processing refunds"]
+  },
+  "dataInputs": {
+    "dataTypesUsed": ["Order IDs", "Customer Names"],
+    "dataSources": ["Order Management System"],
+    "personalOrSensitiveData": true
+  },
+  "modelAutonomyLevel": "Recommendation with human decision",
+  "scaleAndReach": {
+    "expectedNumberOfUsers": "1 million monthly",
+    "frequencyOfUse": "Daily",
+    "geographicScope": "National"
+  }
 };
 
 export default function Home() {
@@ -84,14 +98,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background p-6 md:p-12">
       <div className="max-w-6xl mx-auto space-y-8">
-        <header className="space-y-2">
-          <div className="flex items-center gap-2 text-primary">
-            <ShieldCheck className="w-8 h-8" />
-            <h1 className="text-3xl font-bold tracking-tight">AI Outcome Analyzer</h1>
+        <header className="space-y-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-primary">
+            <ShieldCheck className="w-10 h-10" />
+            <h1 className="text-4xl font-extrabold tracking-tight">AI Outcome Analyzer</h1>
           </div>
-          <p className="text-muted-foreground text-lg">
-            Analyze structured AI use cases for ethical, legal, and social impacts.
-          </p>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-foreground italic">
+              "What are the other potential outcomes of this AI solution?"
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+              Analyze structured AI use cases for ethical, legal, and social impacts using our formal schema.
+            </p>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -102,7 +121,7 @@ export default function Home() {
                 Input Use Case JSON
               </CardTitle>
               <CardDescription>
-                Provide a structured definition of your AI system. Use the sample button to see the required format.
+                Provide a structured definition based on the formal AI Use Case Schema.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -117,7 +136,7 @@ export default function Home() {
                           <Textarea 
                             {...field} 
                             placeholder="Paste your AI use case JSON here..."
-                            className="font-mono text-sm min-h-[450px] resize-none border-2 focus-visible:ring-primary/20"
+                            className="font-mono text-sm min-h-[500px] resize-none border-2 focus-visible:ring-primary/20"
                             data-testid="input-json"
                           />
                         </FormControl>
@@ -163,7 +182,9 @@ export default function Home() {
                 <CardContent className="p-12 text-center">
                   <Loader2 className="w-10 h-10 animate-spin mx-auto text-primary mb-4" />
                   <p className="text-lg font-medium text-foreground">Generating Analysis...</p>
-                  <p className="text-sm text-muted-foreground mt-1">The AI is projecting potential ethical, legal, and social impacts based on your use case.</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    The AI is projecting potential ethical, legal, and social impacts based on your formal definition.
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -172,7 +193,7 @@ export default function Home() {
               <Card className="border-primary/20 shadow-xl overflow-hidden">
                 <CardHeader className="border-b bg-muted/40 flex flex-row items-center justify-between py-4">
                   <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-primary" />
+                    <Sparkles className="w-5 h-5 text-primary" />
                     Analysis Results
                   </CardTitle>
                   <Button 
@@ -198,7 +219,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Ready for Analysis</h3>
                 <p className="text-muted-foreground max-w-sm">
-                  Fill in the JSON schema on the left and click analyze to generate an ethical impact assessment.
+                  Fill in the formal JSON definition on the left and click analyze to generate an assessment.
                 </p>
               </div>
             )}
@@ -210,7 +231,7 @@ export default function Home() {
             "This tool generates analytical projections of potential AI outcomes. It does not replace legal, ethical, or compliance review."
           </p>
           <div className="text-xs text-muted-foreground/60 font-mono">
-            v1.0.0 | Powered by GPT-5
+            v1.1.0 | Formal Schema Support | Powered by GPT-5
           </div>
         </footer>
       </div>
