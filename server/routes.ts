@@ -1,28 +1,62 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import { type Server } from "http";
 import { z } from "zod";
 import OpenAI from "openai";
 import { api } from "@shared/routes";
+import { analyzeRequestSchema } from "@shared/schema";
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
-
+  
   app.post(api.analyze.create.path, async (req, res) => {
     try {
-      const input = api.analyze.create.input.parse(req.body);
+      const input = analyzeRequestSchema.parse(req.body);
       
-      const prompt = `Analyze the following AI use case:\n\nUse Case: ${input.useCase}\nDescription: ${input.description}\n\nPlease provide a structured analysis, including potential benefits, technical feasibility, and possible challenges.`;
+      console.log(`[${new Date().toISOString()}] Analyze Request: useCaseName="${input.useCaseName}", modelAutonomyLevel="${input.modelAutonomyLevel}"`);
+
+      const prompt = `
+        Perform a structured ethical and impact analysis for the following AI use case provided in JSON format:
+        ${JSON.stringify(input, null, 2)}
+
+        What are the other potential outcomes of this AI solution?
+        
+        Analyze the following specifically:
+        - modelAutonomyLevel: ${input.modelAutonomyLevel}
+        - scaleAndReach: ${input.scaleAndReach || "Not specified"}
+        - personalOrSensitiveData: ${input.dataInputs?.personalOrSensitiveData ? "Yes" : "No"}
+
+        Categorize the output into exactly these 8 sections using bullet points:
+        1. Positive outcomes
+        2. Negative outcomes
+        3. Ethical risks
+        4. Legal risks
+        5. Social impacts
+        6. Economic impacts
+        7. Long-term systemic risks
+        8. Recommended Human Oversight Actions
+
+        Guidelines:
+        - Avoid promotional language.
+        - Explicitly analyze modelAutonomyLevel.
+        - Analyze scaleAndReach for amplified risks.
+        - Analyze dataInputs.personalOrSensitiveData carefully.
+        - Identify unintended consequences.
+        - Consider bias, privacy, fairness, transparency, accountability.
+      `;
 
       const response = await openai.chat.completions.create({
         model: "gpt-5",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { 
+            role: "system", 
+            content: "You are an AI ethics and policy expert. Provide structured, critical analysis of AI use cases." 
+          },
+          { role: "user", content: prompt }
+        ],
       });
 
       const analysis = response.choices[0].message.content || "No analysis generated.";
@@ -31,8 +65,8 @@ export async function registerRoutes(
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
+          message: "Validation failed",
+          errors: err.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
         });
       }
       console.error("Analysis error:", err);

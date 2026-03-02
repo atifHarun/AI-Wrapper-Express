@@ -1,0 +1,107 @@
+Create a complete minimal AI Wrapper Web Application using Node.js and Express.
+
+PROJECT GOAL:
+This wrapper analyzes structured AI use case definitions and generates potential outcomes using OpenAI.
+
+REQUIREMENTS:
+
+1. BACKEND:
+- Use Express
+- Use dotenv for environment variables
+- Use OpenAI API
+- Use cors
+- Use AJV for JSON schema validation
+- Run on port 3000
+- Create a POST endpoint at /analyze
+
+2. JSON VALIDATION:
+Validate incoming JSON using the following schema structure:
+
+Required fields:
+- useCaseName (string)
+- systemType (enum: Text-based conversational AI, Voice-based conversational AI, Decision support AI, Agent assist AI)
+- contextOfUse (object with industry and environment enum: Internal, Customer-facing, Public)
+- modelAutonomyLevel (enum: Informational only, Recommendation with human decision, Action execution with human override, Fully autonomous action)
+
+Other optional structured fields:
+- primaryFunction
+- stakeholders
+- decisionsAndActions
+- dataInputs (including personalOrSensitiveData boolean)
+- scaleAndReach
+
+If validation fails:
+- Return HTTP 400
+- Return clear validation errors
+
+3. PROMPT ENGINEERING:
+Construct a structured ethical analysis prompt that:
+
+- Clearly states the AI use case JSON
+- Asks: "What are the other potential outcomes of this AI solution?"
+- Requires categorized output into:
+
+  1. Positive outcomes
+  2. Negative outcomes
+  3. Ethical risks
+  4. Legal risks
+  5. Social impacts
+  6. Economic impacts
+  7. Long-term systemic risks
+  8. Recommended Human Oversight Actions
+
+The prompt must:
+- Avoid promotional language
+- Explicitly analyze modelAutonomyLevel
+- Analyze scaleAndReach for amplified risks
+- Analyze dataInputs.personalOrSensitiveData carefully
+- Identify unintended consequences
+- Consider bias, privacy, fairness, transparency, accountability
+
+4. OPENAI CALL:
+Use chat.completions API.
+Return structured bullet output.
+Handle errors properly.
+
+5. FRONTEND:
+Create a simple index.html that:
+
+- Has a large textarea for JSON input
+- Has a button labeled "Analyze Potential Outcomes"
+- Shows loading message while waiting
+- Displays structured results clearly
+- Displays validation errors clearly
+- Includes a small disclaimer:
+
+"This tool generates analytical projections of potential AI outcomes. It does not replace legal, ethical, or compliance review."
+
+- Include a sample JSON template button that auto-fills example AI use case JSON.
+
+6. CLIENT LOGIC:
+- Validate JSON format before sending
+- Send POST request to /analyze
+- Display formatted results with clear headings
+
+7. LOGGING:
+On backend, log:
+- Timestamp
+- useCaseName
+- modelAutonomyLevel
+Do not log sensitive data.
+
+8. SECURITY:
+- Use environment variable OPENAI_API_KEY
+- Do not expose API key to frontend
+
+9. OUTPUT:
+Provide:
+- Complete server.js
+- Complete index.html
+- npm install command
+- Instructions to run project
+- Any required package.json modifications
+
+Keep everything minimal, clean, and beginner-friendly.
+No frameworks.
+No styling libraries.
+Focus on clarity and structure.
