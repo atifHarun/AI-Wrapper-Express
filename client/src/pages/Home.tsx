@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { analyzeRequestSchema, type AnalyzeRequest } from "@shared/schema";
@@ -10,7 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
-import { Loader2, FileJson, ShieldCheck, AlertCircle, Copy, Check, Sparkles } from "lucide-react";
+import { Loader2, FileJson, ShieldCheck, AlertCircle, Copy, Check, Sparkles, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const SAMPLE_JSON = {
   "useCaseName": "Customer Support Chatbot",
@@ -47,6 +49,8 @@ export default function Home() {
   const { toast } = useToast();
   const [result, setResult] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const form = useForm<{ jsonInput: string }>({
     defaultValues: {
@@ -68,6 +72,7 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setResult(data.analysis);
+      setSelectedItems(new Set()); // Reset selections for new analysis
       toast({ title: "Analysis Complete", description: "The AI has generated the outcome projections." });
     },
     onError: (error: Error) => {
@@ -94,6 +99,69 @@ export default function Home() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  const toggleItem = (item: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(item)) {
+      newSelected.delete(item);
+    } else {
+      newSelected.add(item);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const exportSelected = () => {
+    if (selectedItems.size === 0) {
+      toast({
+        title: "No items selected",
+        description: "Please select at least one outcome.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
+  // Parsing the markdown text into sections and bullets
+  const parsedAnalysis = useMemo(() => {
+    if (!result) return [];
+    
+    const lines = result.split('\n');
+    const sections: { title: string | null, items: string[] }[] = [];
+    let currentSection: { title: string | null, items: string[] } | null = null;
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      // Detect headings (1. Heading or ### Heading)
+      const headingMatch = trimmed.match(/^(?:\d+\.\s+|###\s+)(.*)/);
+      if (headingMatch) {
+        currentSection = { title: headingMatch[1], items: [] };
+        sections.push(currentSection);
+      } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.match(/^\d+\.\s/)) {
+        // Detect bullet points or numbered lists within sections
+        const itemText = trimmed.replace(/^[-*]\s+|\d+\.\s+/, '');
+        if (currentSection) {
+          currentSection.items.push(itemText);
+        } else {
+          // Fallback for bullets before any heading
+          const fallback = { title: null, items: [itemText] };
+          sections.push(fallback);
+          currentSection = fallback;
+        }
+      } else if (currentSection && !trimmed.match(/^[#\d]/)) {
+        // Handle multi-line text by appending to the last item or treating as a new item
+        if (currentSection.items.length > 0) {
+          currentSection.items[currentSection.items.length - 1] += ' ' + trimmed;
+        } else {
+          currentSection.items.push(trimmed);
+        }
+      }
+    });
+
+    return sections;
+  }, [result]);
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-12">
@@ -206,8 +274,40 @@ export default function Home() {
                     {copied ? "Copied" : "Copy Markdown"}
                   </Button>
                 </CardHeader>
-                <CardContent className="p-6 prose prose-slate dark:prose-invert max-w-none">
-                  <ReactMarkdown>{result}</ReactMarkdown>
+                <CardContent className="p-6 space-y-6">
+                  {parsedAnalysis.map((section, idx) => (
+                    <div key={idx} className="space-y-3">
+                      {section.title && (
+                        <h3 className="text-lg font-bold text-foreground border-b pb-1">
+                          {section.title}
+                        </h3>
+                      )}
+                      <div className="space-y-2">
+                        {section.items.map((item, itemIdx) => (
+                          <div key={itemIdx} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toggleItem(item)}>
+                            <Checkbox 
+                              checked={selectedItems.has(item)}
+                              onCheckedChange={() => toggleItem(item)}
+                              className="mt-1"
+                            />
+                            <span className="text-sm leading-relaxed text-muted-foreground">
+                              {item}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="pt-6 border-t">
+                    <Button 
+                      onClick={exportSelected}
+                      className="w-full font-bold"
+                      variant="default"
+                    >
+                      Export Selected Outcomes
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -231,10 +331,26 @@ export default function Home() {
             "This tool generates analytical projections of potential AI outcomes. It does not replace legal, ethical, or compliance review."
           </p>
           <div className="text-xs text-muted-foreground/60 font-mono">
-            v1.1.0 | Formal Schema Support | Powered by GPT-5
+            v1.2.0 | Selection & Export Support | Powered by GPT-5
           </div>
         </footer>
       </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Selected Outcomes</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-4 bg-muted/30 rounded-lg font-mono text-sm">
+            <pre>
+              {JSON.stringify(Array.from(selectedItems), null, 2)}
+            </pre>
+          </div>
+          <DialogFooter className="pt-4">
+            <Button onClick={() => setIsModalOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
