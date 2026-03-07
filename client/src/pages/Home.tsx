@@ -232,7 +232,7 @@ export default function Home() {
                   {generateJsonMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
+                      Generating structured AI definition...
                     </>
                   ) : (
                     <>
@@ -278,7 +278,7 @@ export default function Home() {
                       {analyzeMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing...
+                          Analyzing potential outcomes...
                         </>
                       ) : (
                         "Analyze Potential Outcomes"
@@ -305,7 +305,7 @@ export default function Home() {
               <Card className="animate-pulse border-primary/20 bg-muted/20">
                 <CardContent className="p-12 text-center">
                   <Loader2 className="w-10 h-10 animate-spin mx-auto text-primary mb-4" />
-                  <p className="text-lg font-medium text-foreground">Generating Analysis...</p>
+                  <p className="text-lg font-medium text-foreground">Analyzing potential outcomes...</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     The AI is projecting potential ethical, legal, and social impacts based on your formal definition.
                   </p>
@@ -387,7 +387,7 @@ export default function Home() {
             "This tool generates analytical projections of potential AI outcomes. It does not replace legal, ethical, or compliance review."
           </p>
           <div className="text-xs text-muted-foreground/60 font-mono">
-            v1.3.0 | AI-Assisted JSON Generation | Powered by GPT-5
+            v1.3.1 | Performance Optimized | Powered by GPT-4o-mini
           </div>
         </footer>
       </div>

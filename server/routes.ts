@@ -132,7 +132,7 @@ ${description}
 Return ONLY the JSON object, nothing else.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [
           { 
             role: "system", 
@@ -211,7 +211,7 @@ Return ONLY the JSON object, nothing else.`;
       `;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [
           { 
             role: "system", 
