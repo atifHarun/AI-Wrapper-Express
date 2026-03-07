@@ -1,0 +1,122 @@
+Modify my existing AI Outcome Wrapper webpage (index.html + JS) to add the following functionality:
+
+CURRENT STATE:
+- There is a textarea for AI Use Case JSON input.
+- There is an analysis button that sends the JSON to the backend.
+- Analysis results are displayed with bullet points and checkboxes.
+- Selected items can be exported as an array in a popup.
+
+NEW REQUIREMENTS:
+
+1. ADD AI DESCRIPTION INPUT BOX:
+- Above the existing AI Use Case JSON textarea, add a new text input or textarea labeled:
+   "Describe the AI system you want to define:"
+- Add a button next to it labeled:
+   "Generate Structured JSON"
+
+2. FUNCTIONALITY OF NEW INPUT:
+- When the user types a free-text description of the AI system and clicks "Generate Structured JSON":
+   1. Send the input text to OpenAI using the existing API key.
+   2. Ask OpenAI to **convert the text into a structured AI Use Case JSON** that strictly follows the Formal AI Use Case Schema.
+   3. Validate required fields from the schema:
+({
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Use Case Schema",
+  "type": "object",
+  "required": ["useCaseName", "systemType", "contextOfUse", "modelAutonomyLevel"],
+  "properties": {
+    "useCaseName": {
+      "type": "string",
+      "description": "The name of the specific AI implementation."
+    },
+    "systemType": {
+      "type": "string",
+      "enum": [
+        "Text-based conversational AI",
+        "Voice-based conversational AI",
+        "Decision support AI",
+        "Agent assist AI"
+      ]
+    },
+    "primaryFunction": { "type": "string" },
+    "contextOfUse": {
+      "type": "object",
+      "properties": {
+        "industry": { "type": "string" },
+        "environment": {
+          "type": "string",
+          "enum": ["Internal", "Customer-facing", "Public"]
+        }
+      }
+    },
+    "stakeholders": {
+      "type": "object",
+      "properties": {
+        "primaryUsers": { "type": "array", "items": { "type": "string" } },
+        "indirectlyAffectedParties": { "type": "array", "items": { "type": "string" } },
+        "oversightOwners": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "decisionsAndActions": {
+      "type": "object",
+      "properties": {
+        "decisionsMadeBySystem": { "type": "array", "items": { "type": "string" } },
+        "actionsExecutedAutomatically": { "type": "array", "items": { "type": "string" } },
+        "actionsRequiringHumanApproval": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "dataInputs": {
+      "type": "object",
+      "properties": {
+        "dataTypesUsed": { "type": "array", "items": { "type": "string" } },
+        "dataSources": { "type": "array", "items": { "type": "string" } },
+        "personalOrSensitiveData": { "type": "boolean" }
+      }
+    },
+    "modelAutonomyLevel": {
+      "type": "string",
+      "enum": [
+        "Informational only",
+        "Recommendation with human decision",
+        "Action execution with human override",
+        "Fully autonomous action"
+      ]
+    },
+    "scaleAndReach": {
+      "type": "object",
+      "properties": {
+        "expectedNumberOfUsers": { "type": "string" },
+        "frequencyOfUse": { "type": "string" },
+        "geographicScope": { "type": "string" }
+      }
+    }
+  }
+})
+   4. Return the structured JSON as text.
+   5. Automatically insert the returned JSON into the existing "AI Use Case JSON" textarea.
+   6. If OpenAI cannot generate valid JSON, show an alert:
+       "Unable to generate valid JSON. Please try again."
+
+3. TECHNICAL RULES:
+- Use the same backend if possible; if not, call OpenAI directly from frontend using fetch.
+- Use the existing OpenAI API key.
+- Ensure the inserted JSON is editable by the user.
+- Keep the UI minimal and clean.
+- Use plain JavaScript only, no frameworks.
+
+4. EDGE CASES:
+- If the user input is empty, disable the "Generate Structured JSON" button or show an alert.
+- Ensure that multiple generations overwrite previous JSON in the textarea.
+- If OpenAI returns invalid JSON, do not overwrite the existing JSON.
+
+5. OUTPUT EXPECTED:
+- Updated index.html
+- Updated or new JavaScript logic for:
+   - Capturing the description
+   - Calling OpenAI
+   - Validating JSON
+   - Inserting result into existing JSON input box
+- Clear comments explaining the workflow
+
+GOAL:
+The user can now type any AI description, click the button, and get a ready-to-use structured AI Use Case JSON inserted into the input box for further analysis.

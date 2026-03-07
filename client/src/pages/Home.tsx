@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
-import { Loader2, FileJson, ShieldCheck, AlertCircle, Copy, Check, Sparkles, X } from "lucide-react";
+import { Loader2, FileJson, ShieldCheck, AlertCircle, Copy, Check, Sparkles, X, Wand2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
@@ -51,6 +51,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [descriptionInput, setDescriptionInput] = useState("");
 
   const form = useForm<{ jsonInput: string }>({
     defaultValues: {
@@ -58,7 +59,32 @@ export default function Home() {
     },
   });
 
-  const mutation = useMutation({
+  // Mutation for generating JSON from description
+  const generateJsonMutation = useMutation({
+    mutationFn: async (description: string) => {
+      if (!description.trim()) {
+        throw new Error("Please enter a description.");
+      }
+      const res = await apiRequest("POST", "/generate-json", { description });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      try {
+        const generatedJson = data.json;
+        form.setValue("jsonInput", JSON.stringify(generatedJson, null, 2));
+        setDescriptionInput("");
+        toast({ title: "Success", description: "Structured JSON generated and inserted." });
+      } catch (err) {
+        toast({ title: "Error", description: "Failed to process generated JSON.", variant: "destructive" });
+      }
+    },
+    onError: (error: Error) => {
+      toast({ title: "Generation Failed", description: error.message, variant: "destructive" });
+    }
+  });
+
+  // Mutation for analyzing the use case
+  const analyzeMutation = useMutation({
     mutationFn: async (json: string) => {
       let parsed;
       try {
@@ -72,20 +98,16 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setResult(data.analysis);
-      setSelectedItems(new Set()); // Reset selections for new analysis
+      setSelectedItems(new Set());
       toast({ title: "Analysis Complete", description: "The AI has generated the outcome projections." });
     },
     onError: (error: Error) => {
-      toast({ 
-        title: "Analysis Failed", 
-        description: error.message,
-        variant: "destructive"
-      });
+      toast({ title: "Analysis Failed", description: error.message, variant: "destructive" });
     }
   });
 
-  const onSubmit = (data: { jsonInput: string }) => {
-    mutation.mutate(data.jsonInput);
+  const onAnalyzeSubmit = (data: { jsonInput: string }) => {
+    analyzeMutation.mutate(data.jsonInput);
   };
 
   const fillSample = () => {
@@ -134,24 +156,20 @@ export default function Home() {
       const trimmed = line.trim();
       if (!trimmed) return;
 
-      // Detect headings (1. Heading or ### Heading)
       const headingMatch = trimmed.match(/^(?:\d+\.\s+|###\s+)(.*)/);
       if (headingMatch) {
         currentSection = { title: headingMatch[1], items: [] };
         sections.push(currentSection);
       } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.match(/^\d+\.\s/)) {
-        // Detect bullet points or numbered lists within sections
         const itemText = trimmed.replace(/^[-*]\s+|\d+\.\s+/, '');
         if (currentSection) {
           currentSection.items.push(itemText);
         } else {
-          // Fallback for bullets before any heading
           const fallback = { title: null, items: [itemText] };
           sections.push(fallback);
           currentSection = fallback;
         }
       } else if (currentSection && !trimmed.match(/^[#\d]/)) {
-        // Handle multi-line text by appending to the last item or treating as a new item
         if (currentSection.items.length > 0) {
           currentSection.items[currentSection.items.length - 1] += ' ' + trimmed;
         } else {
@@ -185,41 +203,79 @@ export default function Home() {
           <Card className="lg:sticky lg:top-8 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <FileJson className="w-5 h-5 text-primary" />
-                Input Use Case JSON
+                <Wand2 className="w-5 h-5 text-primary" />
+                AI System Definition
               </CardTitle>
               <CardDescription>
-                Provide a structured definition based on the formal AI Use Case Schema.
+                Describe your AI system or provide structured JSON.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Description Input Section */}
+              <div className="space-y-3 p-4 rounded-lg bg-muted/30 border">
+                <label className="block text-sm font-medium text-foreground">
+                  Describe the AI system you want to define:
+                </label>
+                <Textarea
+                  value={descriptionInput}
+                  onChange={(e) => setDescriptionInput(e.target.value)}
+                  placeholder="e.g., 'A customer support chatbot that answers FAQs and provides order tracking information to customers online. It runs 24/7 and is trained on internal product documentation.'"
+                  className="min-h-[100px] resize-none"
+                  disabled={generateJsonMutation.isPending}
+                />
+                <Button
+                  onClick={() => generateJsonMutation.mutate(descriptionInput)}
+                  disabled={generateJsonMutation.isPending || !descriptionInput.trim()}
+                  className="w-full"
+                  variant="outline"
+                >
+                  {generateJsonMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="mr-2 h-4 w-4" />
+                      Generate Structured JSON
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* JSON Input Section */}
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="jsonInput"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Textarea 
-                            {...field} 
-                            placeholder="Paste your AI use case JSON here..."
-                            className="font-mono text-sm min-h-[500px] resize-none border-2 focus-visible:ring-primary/20"
-                            data-testid="input-json"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <form onSubmit={form.handleSubmit(onAnalyzeSubmit)} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      AI Use Case JSON:
+                    </label>
+                    <FormField
+                      control={form.control}
+                      name="jsonInput"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea 
+                              {...field} 
+                              placeholder="Paste your AI use case JSON here..."
+                              className="font-mono text-sm min-h-[350px] resize-none border-2 focus-visible:ring-primary/20"
+                              data-testid="input-json"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <div className="flex gap-3">
                     <Button 
                       type="submit" 
                       className="flex-1 font-semibold h-11"
-                      disabled={mutation.isPending}
+                      disabled={analyzeMutation.isPending}
                       data-testid="button-analyze"
                     >
-                      {mutation.isPending ? (
+                      {analyzeMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Analyzing...
@@ -232,7 +288,7 @@ export default function Home() {
                       type="button" 
                       variant="outline"
                       onClick={fillSample}
-                      disabled={mutation.isPending}
+                      disabled={analyzeMutation.isPending}
                       className="h-11"
                       data-testid="button-sample"
                     >
@@ -245,7 +301,7 @@ export default function Home() {
           </Card>
 
           <div className="space-y-8 h-full">
-            {mutation.isPending && (
+            {analyzeMutation.isPending && (
               <Card className="animate-pulse border-primary/20 bg-muted/20">
                 <CardContent className="p-12 text-center">
                   <Loader2 className="w-10 h-10 animate-spin mx-auto text-primary mb-4" />
@@ -257,7 +313,7 @@ export default function Home() {
               </Card>
             )}
 
-            {result && !mutation.isPending && (
+            {result && !analyzeMutation.isPending && (
               <Card className="border-primary/20 shadow-xl overflow-hidden">
                 <CardHeader className="border-b bg-muted/40 flex flex-row items-center justify-between py-4">
                   <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -312,14 +368,14 @@ export default function Home() {
               </Card>
             )}
 
-            {!result && !mutation.isPending && (
+            {!result && !analyzeMutation.isPending && (
               <div className="h-full min-h-[500px] flex flex-col items-center justify-center p-12 text-center border-2 border-dashed rounded-xl bg-muted/5">
                 <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mb-6">
                   <AlertCircle className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Ready for Analysis</h3>
                 <p className="text-muted-foreground max-w-sm">
-                  Fill in the formal JSON definition on the left and click analyze to generate an assessment.
+                  Describe your AI system or provide JSON, then click analyze to generate an assessment.
                 </p>
               </div>
             )}
@@ -331,7 +387,7 @@ export default function Home() {
             "This tool generates analytical projections of potential AI outcomes. It does not replace legal, ethical, or compliance review."
           </p>
           <div className="text-xs text-muted-foreground/60 font-mono">
-            v1.2.0 | Selection & Export Support | Powered by GPT-5
+            v1.3.0 | AI-Assisted JSON Generation | Powered by GPT-5
           </div>
         </footer>
       </div>

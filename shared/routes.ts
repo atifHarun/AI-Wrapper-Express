@@ -24,6 +24,18 @@ export const api = {
       },
     },
   },
+  generateJson: {
+    create: {
+      method: 'POST' as const,
+      path: '/generate-json' as const,
+      input: z.object({ description: z.string().min(1) }),
+      responses: {
+        200: z.object({ json: z.object({}).passthrough() }),
+        400: errorSchemas.validation,
+        500: errorSchemas.internal,
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
