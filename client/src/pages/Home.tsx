@@ -72,7 +72,6 @@ export default function Home() {
       try {
         const generatedJson = data.json;
         form.setValue("jsonInput", JSON.stringify(generatedJson, null, 2));
-        setDescriptionInput("");
         toast({ title: "Success", description: "Structured JSON generated and inserted." });
       } catch (err) {
         toast({ title: "Error", description: "Failed to process generated JSON.", variant: "destructive" });
