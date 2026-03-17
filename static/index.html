@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Outcome Analyzer</title>
+  <meta name="description" content="Analyze structured AI use cases for ethical, legal, and social impacts." />
+  <style>
+    /* ── Reset & base ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fb;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    .container  { max-width: 1100px; margin: 0 auto; }
+    .grid       { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header      { text-align: center; margin-bottom: 2.5rem; }
+    .header-icon { display: flex; align-items: center; justify-content: center; gap: .5rem; color: #4f46e5; margin-bottom: .75rem; }
+    .header-icon svg { width: 2.5rem; height: 2.5rem; }
+    h1          { font-size: 2.25rem; font-weight: 800; letter-spacing: -.02em; }
+    h2.subtitle { font-size: 1.25rem; font-style: italic; color: #374151; margin-bottom: .5rem; }
+    .subtext    { color: #6b7280; font-size: 1rem; max-width: 640px; margin: 0 auto; }
+
+    /* ── Cards ──────────────────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: .75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fafafa;
+    }
+    .card-header h3 { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+    .card-header p  { font-size: .85rem; color: #6b7280; margin-top: .25rem; }
+    .card-body      { padding: 1.5rem; }
+
+    /* ── Form elements ──────────────────────────────────────────────────── */
+    label       { display: block; font-size: .875rem; font-weight: 500; margin-bottom: .4rem; }
+    textarea, input {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: .5rem;
+      padding: .625rem .75rem;
+      font-size: .9rem;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s;
+      background: #fff;
+      color: #1a1a2e;
+    }
+    textarea:focus, input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+    textarea:disabled { background: #f3f4f6; cursor: not-allowed; }
+    #description-input { min-height: 100px; }
+    #json-input        { min-height: 340px; font-family: "Courier New", monospace; font-size: .8rem; border-width: 2px; }
+
+    /* ── Buttons ────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+      padding: .625rem 1.25rem;
+      border-radius: .5rem;
+      font-size: .9rem; font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background .15s, opacity .15s;
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-primary   { background: #4f46e5; color: #fff; }
+    .btn-primary:hover:not(:disabled)   { background: #4338ca; }
+    .btn-outline   { background: transparent; color: #4f46e5; border: 1.5px solid #4f46e5; }
+    .btn-outline:hover:not(:disabled)   { background: #f5f3ff; }
+    .btn-ghost     { background: transparent; color: #374151; border: 1px solid #d1d5db; }
+    .btn-ghost:hover:not(:disabled)     { background: #f3f4f6; }
+    .btn-full      { width: 100%; }
+    .btn-row       { display: flex; gap: .75rem; }
+    .btn-row .btn  { flex: 1; }
+
+    /* ── Section boxes ──────────────────────────────────────────────────── */
+    .section-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: .625rem;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-box label { margin-bottom: .5rem; }
+
+    /* ── Analysis results ───────────────────────────────────────────────── */
+    .analysis-section  { margin-bottom: 1.5rem; }
+    .analysis-section h4 {
+      font-size: 1rem; font-weight: 700;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: .75rem;
+    }
+    .bullet-row {
+      display: flex; align-items: flex-start; gap: .625rem;
+      padding: .375rem .5rem;
+      border-radius: .375rem;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .bullet-row:hover  { background: #f3f4f6; }
+    .bullet-row input[type="checkbox"] {
+      width: 1rem; height: 1rem;
+      margin-top: .2rem; flex-shrink: 0;
+      accent-color: #4f46e5;
+      cursor: pointer;
+    }
+    .bullet-row span   { font-size: .875rem; color: #4b5563; line-height: 1.55; }
+
+    /* ── Loading spinner ────────────────────────────────────────────────── */
+    .spinner {
+      width: 1rem; height: 1rem;
+      border: 2px solid currentColor; border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Loading card ───────────────────────────────────────────────────── */
+    .loading-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: .75rem;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    .loading-card .big-spinner {
+      width: 2.5rem; height: 2.5rem;
+      border-width: 3px;
+      color: #4f46e5;
+      margin: 0 auto 1rem;
+      display: block;
+    }
+    .loading-card p { font-size: 1.05rem; font-weight: 600; }
+    .loading-card small { color: #6b7280; font-size: .875rem; display: block; margin-top: .35rem; }
+
+    /* ── Empty state ────────────────────────────────────────────────────── */
+    .empty-state {
+      min-height: 460px;
+      border: 2px dashed #d1d5db;
+      border-radius: .75rem;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 3rem 1.5rem; text-align: center;
+    }
+    .empty-icon {
+      width: 3.5rem; height: 3.5rem;
+      background: #f3f4f6;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .empty-icon svg { color: #9ca3af; }
+    .empty-state h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+    .empty-state p  { color: #6b7280; max-width: 280px; font-size: .9rem; }
+
+    /* ── Copy row ───────────────────────────────────────────────────────── */
+    .result-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* ── Modal overlay ──────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 999;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: .75rem;
+      max-width: 640px; width: 94%;
+      max-height: 80vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      color: #6b7280; font-size: 1.3rem; line-height: 1;
+    }
+    .modal-close:hover { color: #111; }
+    .modal-body {
+      flex: 1; overflow-y: auto;
+      padding: 1.25rem 1.5rem;
+      background: #f9fafb;
+    }
+    .modal-body pre {
+      font-family: "Courier New", monospace;
+      font-size: .82rem; white-space: pre-wrap; word-break: break-word;
+    }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex; justify-content: flex-end;
+    }
+
+    /* ── Toast ──────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #1a1a2e; color: #fff;
+      padding: .75rem 1.25rem;
+      border-radius: .5rem;
+      font-size: .875rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+      z-index: 1000;
+      max-width: 320px;
+    }
+    #toast.error-toast { background: #dc2626; }
+    #toast.show        { opacity: 1; }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    footer {
+      margin-top: 3rem; padding-top: 2rem;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+    }
+    .footer-disclaimer {
+      font-size: .875rem; font-style: italic;
+      color: #6b7280;
+      background: #f3f4f6;
+      border-radius: .5rem;
+      padding: .75rem 1.25rem;
+      max-width: 640px; margin: 0 auto 1rem;
+    }
+    .footer-version { font-size: .75rem; color: #9ca3af; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="header-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+      </svg>
+      <h1>AI Outcome Analyzer</h1>
+    </div>
+    <h2 class="subtitle">"What are the other potential outcomes of this AI solution?"</h2>
+    <p class="subtext">Analyze structured AI use cases for ethical, legal, and social impacts using our formal schema.</p>
+  </header>
+
+  <!-- ── Two-column grid ─────────────────────────────────────────────────── -->
+  <div class="grid">
+
+    <!-- LEFT COLUMN: inputs -->
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="color:#4f46e5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+          </svg>
+          AI System Definition
+        </h3>
+        <p>Describe your AI system or provide structured JSON.</p>
+      </div>
+      <div class="card-body">
+
+        <!-- Description box -->
+        <div class="section-box">
+          <label for="description-input">Describe the AI system you want to define:</label>
+          <textarea
+            id="description-input"
+            placeholder="e.g., 'A customer support chatbot that answers FAQs and provides order tracking information to customers online. It runs 24/7 and is trained on internal product documentation.'"
+          ></textarea>
+          <br /><br />
+          <button class="btn btn-outline btn-full" id="btn-generate" onclick="generateJson()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+            </svg>
+            Generate Structured JSON
+          </button>
+        </div>
+
+        <!-- JSON input -->
+        <div>
+          <label for="json-input">AI Use Case JSON:</label>
+          <textarea id="json-input" spellcheck="false"></textarea>
+        </div>
+        <br />
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-analyze" onclick="analyze()">Analyze Potential Outcomes</button>
+          <button class="btn btn-ghost" onclick="fillSample()">Sample JSON</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: results -->
+    <div id="results-col">
+      <!-- Filled dynamically -->
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer>
+    <p class="footer-disclaimer">
+      "This tool generates analytical projections of potential AI outcomes. It does not replace legal, ethical, or compliance review."
+    </p>
+    <p class="footer-version">v2.0.0 | Flask + Plain HTML | Powered by GPT-4o-mini</p>
+  </footer>
+
+</div><!-- /container -->
+
+<!-- ── Export modal ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Selected Outcomes</h3>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <pre id="modal-content"></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ────────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+  // ── Sample JSON ───────────────────────────────────────────────────────────
+  const SAMPLE_JSON = {
+    useCaseName: "Customer Support Chatbot",
+    systemType: "Text-based conversational AI",
+    primaryFunction: "Answering FAQs and providing product tracking information.",
+    contextOfUse: { industry: "Retail", environment: "Customer-facing" },
+    stakeholders: {
+      primaryUsers: ["Customers", "Support Agents"],
+      indirectlyAffectedParties: ["Retail Managers"],
+      oversightOwners: ["Compliance Team"]
+    },
+    decisionsAndActions: {
+      decisionsMadeBySystem: ["Identifying user intent", "Selecting best FAQ response"],
+      actionsExecutedAutomatically: ["Displaying tracking status"],
+      actionsRequiringHumanApproval: ["Processing refunds"]
+    },
+    dataInputs: {
+      dataTypesUsed: ["Order IDs", "Customer Names"],
+      dataSources: ["Order Management System"],
+      personalOrSensitiveData: true
+    },
+    modelAutonomyLevel: "Recommendation with human decision",
+    scaleAndReach: {
+      expectedNumberOfUsers: "1 million monthly",
+      frequencyOfUse: "Daily",
+      geographicScope: "National"
+    }
+  };
+
+  // Pre-fill the JSON textarea with the sample on page load
+  document.getElementById("json-input").value = JSON.stringify(SAMPLE_JSON, null, 2);
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let selectedItems = new Set();
+  let currentAnalysis = null;
+
+  // ── Toast helper ──────────────────────────────────────────────────────────
+  let toastTimer = null;
+  function showToast(message, isError = false) {
+    const el = document.getElementById("toast");
+    el.textContent = message;
+    el.className = "show" + (isError ? " error-toast" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ""; }, 3500);
+  }
+
+  // ── Fill sample ───────────────────────────────────────────────────────────
+  function fillSample() {
+    document.getElementById("json-input").value = JSON.stringify(SAMPLE_JSON, null, 2);
+    showToast("Sample JSON loaded.");
+  }
+
+  // ── Set button loading state ──────────────────────────────────────────────
+  function setGenerateLoading(loading) {
+    const btn = document.getElementById("btn-generate");
+    const descInput = document.getElementById("description-input");
+    if (loading) {
+      btn.disabled = true;
+      descInput.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating structured AI definition...';
+    } else {
+      btn.disabled = false;
+      descInput.disabled = false;
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+        </svg>
+        Generate Structured JSON`;
+    }
+  }
+
+  function setAnalyzeLoading(loading) {
+    const btn = document.getElementById("btn-analyze");
+    if (loading) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" style="border-color:#fff;border-top-color:transparent"></span> Analyzing potential outcomes...';
+      renderLoadingState();
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Analyze Potential Outcomes";
+    }
+  }
+
+  // ── Generate JSON ─────────────────────────────────────────────────────────
+  async function generateJson() {
+    const description = document.getElementById("description-input").value;
+    if (!description.trim()) {
+      showToast("Please enter a description first.", true);
+      return;
+    }
+
+    setGenerateLoading(true);
+    try {
+      const res = await fetch("/generate-json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Generation failed.");
+      }
+
+      // Auto-fill the JSON textarea; description input is NOT cleared
+      document.getElementById("json-input").value = JSON.stringify(data.json, null, 2);
+      showToast("Structured JSON generated and inserted.");
+    } catch (err) {
+      showToast(err.message || "Generation failed. Please try again.", true);
+    } finally {
+      setGenerateLoading(false);
+    }
+  }
+
+  // ── Analyze ───────────────────────────────────────────────────────────────
+  async function analyze() {
+    const jsonText = document.getElementById("json-input").value;
+    let parsed;
+
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch {
+      showToast("Invalid JSON format. Please check your input.", true);
+      return;
+    }
+
+    setAnalyzeLoading(true);
+    try {
+      const res = await fetch("/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Analysis failed.");
+      }
+
+      currentAnalysis = data.analysis;
+      selectedItems = new Set();        // reset selections on new analysis
+      renderAnalysis(data.analysis);
+      showToast("Analysis complete.");
+    } catch (err) {
+      showToast(err.message || "Analysis failed. Please try again.", true);
+      renderEmptyState();
+    } finally {
+      setAnalyzeLoading(false);
+    }
+  }
+
+  // ── Parse markdown into sections + bullets ────────────────────────────────
+  function parseAnalysis(text) {
+    const lines = text.split("\n");
+    const sections = [];
+    let currentSection = null;
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      // Match numbered headings (e.g. "1. Positive outcomes") or ### headings
+      const headingMatch = trimmed.match(/^(?:\d+\.\s+|###\s+)(.*)/);
+      if (headingMatch) {
+        currentSection = { title: headingMatch[1], items: [] };
+        sections.push(currentSection);
+        return;
+      }
+
+      // Match bullet lines: "- ", "* ", or "1. "
+      if (trimmed.startsWith("- ") || trimmed.startsWith("* ") || trimmed.match(/^\d+\.\s/)) {
+        const itemText = trimmed.replace(/^[-*]\s+|\d+\.\s+/, "");
+        if (currentSection) {
+          currentSection.items.push(itemText);
+        } else {
+          const fallback = { title: null, items: [itemText] };
+          sections.push(fallback);
+          currentSection = fallback;
+        }
+        return;
+      }
+
+      // Continuation text: append to last bullet in current section
+      if (currentSection && !trimmed.match(/^[#\d]/)) {
+        if (currentSection.items.length > 0) {
+          currentSection.items[currentSection.items.length - 1] += " " + trimmed;
+        } else {
+          currentSection.items.push(trimmed);
+        }
+      }
+    });
+
+    return sections;
+  }
+
+  // ── Toggle checkbox selection ─────────────────────────────────────────────
+  function toggleItem(itemText) {
+    const key = itemText;
+    if (selectedItems.has(key)) {
+      selectedItems.delete(key);
+    } else {
+      selectedItems.add(key);
+    }
+    // Update the checkbox visually
+    const allRows = document.querySelectorAll(".bullet-row");
+    allRows.forEach(row => {
+      if (row.dataset.item === key) {
+        row.querySelector('input[type="checkbox"]').checked = selectedItems.has(key);
+      }
+    });
+  }
+
+  // ── Render analysis into results column ───────────────────────────────────
+  function renderAnalysis(text) {
+    const sections = parseAnalysis(text);
+    const col = document.getElementById("results-col");
+
+    // Build card HTML
+    let sectionsHtml = "";
+    sections.forEach(section => {
+      const titleHtml = section.title
+        ? `<h4>${escHtml(section.title)}</h4>`
+        : "";
+      const itemsHtml = section.items.map(item => `
+        <div class="bullet-row" data-item="${escAttr(item)}" onclick="toggleItem(this.dataset.item)">
+          <input type="checkbox" onclick="event.stopPropagation(); toggleItem(this.parentElement.dataset.item)" />
+          <span>${escHtml(item)}</span>
+        </div>
+      `).join("");
+      sectionsHtml += `<div class="analysis-section">${titleHtml}<div>${itemsHtml}</div></div>`;
+    });
+
+    col.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div class="result-header-row">
+            <h3>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="color:#4f46e5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                Analysis Results
+              </svg>
+            </h3>
+            <button class="btn btn-ghost" style="padding:.375rem .75rem;font-size:.8rem" onclick="copyMarkdown()">Copy Markdown</button>
+          </div>
+        </div>
+        <div class="card-body">
+          ${sectionsHtml}
+          <div style="padding-top:1rem; border-top:1px solid #e5e7eb; margin-top:.5rem">
+            <button class="btn btn-primary btn-full" onclick="exportSelected()">Export Selected Outcomes</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Loading state in results column ──────────────────────────────────────
+  function renderLoadingState() {
+    document.getElementById("results-col").innerHTML = `
+      <div class="loading-card">
+        <span class="spinner big-spinner" style="width:2.5rem;height:2.5rem;border-width:3px;color:#4f46e5;border-top-color:transparent"></span>
+        <p>Analyzing potential outcomes...</p>
+        <small>The AI is projecting potential ethical, legal, and social impacts based on your formal definition.</small>
+      </div>
+    `;
+  }
+
+  // ── Empty state ───────────────────────────────────────────────────────────
+  function renderEmptyState() {
+    document.getElementById("results-col").innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+        </div>
+        <h3>Ready for Analysis</h3>
+        <p>Describe your AI system or provide JSON, then click analyze to generate an assessment.</p>
+      </div>
+    `;
+  }
+
+  // Initialise with empty state
+  renderEmptyState();
+
+  // ── Copy markdown ─────────────────────────────────────────────────────────
+  function copyMarkdown() {
+    if (!currentAnalysis) return;
+    navigator.clipboard.writeText(currentAnalysis).then(() => showToast("Copied to clipboard."));
+  }
+
+  // ── Export modal ──────────────────────────────────────────────────────────
+  function exportSelected() {
+    if (selectedItems.size === 0) {
+      showToast("Please select at least one outcome.", true);
+      return;
+    }
+    document.getElementById("modal-content").textContent =
+      JSON.stringify(Array.from(selectedItems), null, 2);
+    document.getElementById("modal-overlay").classList.add("open");
+  }
+
+  function closeModal() {
+    document.getElementById("modal-overlay").classList.remove("open");
+  }
+
+  // Close modal on overlay click
+  document.getElementById("modal-overlay").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ── HTML escaping helpers ─────────────────────────────────────────────────
+  function escHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function escAttr(str) {
+    return str.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+</script>
+</body>
+</html>

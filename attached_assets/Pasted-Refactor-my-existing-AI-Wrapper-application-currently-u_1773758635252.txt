@@ -1,0 +1,90 @@
+Refactor my existing AI Wrapper application (currently using React frontend and Node.js backend) into a simpler architecture using:
+
+- Plain HTML + JavaScript (frontend)
+- Python with Flask (backend)
+
+GOAL:
+Make the app easier to understand, lightweight, and easy to integrate into other websites, while keeping ALL current functionality.
+
+REQUIREMENTS:
+
+1. BACKEND (Python Flask):
+- Create a Flask app (app.py)
+- Use OpenAI API with environment variable OPENAI_API_KEY
+- Create two endpoints:
+
+  POST /generate-json
+    - Input: { description }
+    - Output: structured AI Use Case JSON
+
+  POST /analyze
+    - Input: { json }
+    - Output: categorized outcome analysis
+
+- Keep:
+  - Existing prompt logic
+  - Model: gpt-4o-mini
+  - max_tokens and temperature settings
+  - Error handling
+
+2. FRONTEND (Plain HTML + JS):
+- Replace React frontend with a single index.html file
+- Include:
+  - AI description input box + "Generate Structured JSON" button
+  - JSON textarea input
+  - "Analyze Potential Outcomes" button
+  - Analysis results display
+  - Checkbox for EACH bullet point (not categories)
+  - "Export Selected Outcomes" button
+  - Popup modal showing selected items as array
+
+- Keep ALL behaviors:
+  - Description text remains after clicking button
+  - JSON auto-filled after generation
+  - Loading messages
+  - Button disabling during API calls
+  - Error handling messages
+
+3. FRONTEND-BACKEND CONNECTION:
+- Use fetch API in JavaScript
+- Call:
+    /generate-json
+    /analyze
+- Use relative paths
+
+4. SECURITY:
+- API key must ONLY exist in Flask backend
+- Do NOT expose API key in frontend
+
+5. PROJECT STRUCTURE:
+
+/project
+  ├── app.py
+  ├── .env
+  ├── requirements.txt
+  └── /static
+        └── index.html
+
+- Serve HTML using Flask (render_template or static route)
+
+6. REQUIREMENTS.TXT:
+Include:
+- flask
+- openai
+- python-dotenv
+
+7. OUTPUT:
+Provide:
+- Full app.py
+- Full index.html
+- requirements.txt
+- Instructions to run:
+   pip install -r requirements.txt
+   python app.py
+
+IMPORTANT:
+- Do NOT remove any features
+- Do NOT simplify functionality
+- Only simplify the technology stack
+- Keep UI minimal and clean
+- Keep code beginner-friendly and well-commented
