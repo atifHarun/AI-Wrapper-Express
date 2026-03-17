@@ -1,0 +1,81 @@
+Refactor my existing AI Wrapper web application into a proper frontend/backend architecture without breaking any current functionality.
+
+CURRENT STATE:
+- The app is working
+- It includes:
+  1. AI description input → generates structured JSON
+  2. JSON input → generates outcome analysis
+  3. Checkbox selection and export popup
+- Some or all OpenAI API calls may currently be in the frontend
+
+GOAL:
+Separate the application into:
+- Frontend (UI only)
+- Backend (API + OpenAI logic)
+
+REQUIREMENTS:
+
+1. BACKEND (Node.js + Express):
+- Create a server.js file
+- Move ALL OpenAI API calls to the backend
+- Use dotenv for OPENAI_API_KEY
+- Create endpoints:
+
+  POST /generate-json
+    - Input: { description }
+    - Output: structured AI Use Case JSON
+
+  POST /analyze
+    - Input: { json }
+    - Output: categorized outcome analysis
+
+- Keep:
+  - Existing prompt logic
+  - Speed optimizations (model, max_tokens, temperature)
+  - Error handling
+
+2. FRONTEND:
+- Keep index.html
+- Remove any direct OpenAI API calls
+- Replace them with fetch calls to:
+    /generate-json
+    /analyze
+
+- Maintain ALL existing features:
+  - Input box behavior (text stays after click)
+  - JSON auto-fill
+  - Analysis display
+  - Checkbox generation per bullet
+  - Export selected items popup
+
+3. SECURITY:
+- Ensure API key is NOT exposed in frontend
+- Use process.env.OPENAI_API_KEY only in backend
+
+4. PROJECT STRUCTURE:
+Organize files like:
+
+/project
+  ├── server.js
+  ├── package.json
+  ├── .env
+  └── /public
+        └── index.html
+
+- Serve frontend using express.static()
+
+5. CONNECTION:
+- Ensure frontend works with backend using fetch
+- Use relative paths (no localhost hardcoding issues)
+
+6. OUTPUT:
+Provide:
+- Full updated server.js
+- Updated index.html with fetch calls
+- Instructions to run the project
+- Any package.json updates
+
+IMPORTANT:
+- Do NOT remove or redesign features
+- Only refactor structure
+- Keep UI and behavior the same
