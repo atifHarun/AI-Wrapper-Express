@@ -759,6 +759,9 @@
 
   // ── Render analysis into results column ───────────────────────────────────
   function renderAnalysis(text) {
+    // Remove all markdown bold markers (**) before rendering so they don't
+    // appear in the UI, checkbox labels, or exported selections.
+    text = text.replace(/\*\*/g, "");
     const sections = parseAnalysis(text);
     const col = document.getElementById("results-col");
 
