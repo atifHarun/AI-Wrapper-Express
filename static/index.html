@@ -248,6 +248,42 @@
       max-width: 640px; margin: 0 auto 1rem;
     }
     .footer-version { font-size: .75rem; color: #9ca3af; font-family: monospace; }
+
+    /* ── Mode toggle ─────────────────────────────────────────────────────── */
+    .mode-bar {
+      display: flex; align-items: center; justify-content: center; gap: .75rem;
+      margin-bottom: 2rem;
+    }
+    .mode-bar .mode-label { font-size: .875rem; font-weight: 600; color: #374151; }
+    .mode-pills {
+      display: inline-flex;
+      border: 1.5px solid #d1d5db;
+      border-radius: 2rem;
+      overflow: hidden;
+      background: #f3f4f6;
+    }
+    .mode-pill {
+      padding: .35rem 1.1rem;
+      font-size: .85rem; font-weight: 600;
+      border: none; background: transparent;
+      cursor: pointer; color: #6b7280;
+      transition: background .15s, color .15s;
+      border-radius: 2rem;
+    }
+    .mode-pill.active {
+      background: #18181b; color: #fff;
+    }
+    .mode-pill:not(.active):hover { background: #e5e7eb; color: #18181b; }
+
+    /* Mode badge shown inside card header */
+    .mode-badge {
+      display: inline-block;
+      font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+      background: #f3f4f6; color: #6b7280;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px; padding: .15rem .55rem;
+      margin-left: .5rem; vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -266,6 +302,15 @@
     <p class="subtext">Analyze structured AI use cases for ethical, legal, and social impacts using our formal schema.</p>
   </header>
 
+  <!-- ── Mode toggle ────────────────────────────────────────────────────── -->
+  <div class="mode-bar">
+    <span class="mode-label">Mode:</span>
+    <div class="mode-pills">
+      <button id="btn-mode-normal" class="mode-pill active" onclick="setMode('normal')">Normal</button>
+      <button id="btn-mode-expert" class="mode-pill"        onclick="setMode('expert')">Expert</button>
+    </div>
+  </div>
+
   <!-- ── Two-column grid ─────────────────────────────────────────────────── -->
   <div class="grid">
 
@@ -277,12 +322,13 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
           </svg>
           AI System Definition
+          <span class="mode-badge" id="mode-badge">Normal</span>
         </h3>
-        <p>Describe your AI system or provide structured JSON.</p>
+        <p id="card-subtitle">Describe your AI system — one click generates and analyzes it.</p>
       </div>
       <div class="card-body">
 
-        <!-- Description box -->
+        <!-- Description box (always visible) -->
         <div class="section-box">
           <label for="description-input">Describe the AI system you want to define:</label>
           <textarea
@@ -290,7 +336,17 @@
             placeholder="e.g., 'A customer support chatbot that answers FAQs and provides order tracking information to customers online. It runs 24/7 and is trained on internal product documentation.'"
           ></textarea>
           <br /><br />
-          <button class="btn btn-outline btn-full" id="btn-generate" onclick="generateJson()">
+
+          <!-- NORMAL MODE: single "Generate & Analyze" button (hidden in Expert) -->
+          <button class="btn btn-primary btn-full" id="btn-generate-analyze" onclick="generateAndAnalyze()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+            </svg>
+            Generate &amp; Analyze
+          </button>
+
+          <!-- EXPERT MODE: "Generate Structured JSON" only (hidden in Normal) -->
+          <button class="btn btn-outline btn-full" id="btn-generate" onclick="generateJson()" style="display:none">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
             </svg>
@@ -298,15 +354,17 @@
           </button>
         </div>
 
-        <!-- JSON input -->
-        <div>
-          <label for="json-input">AI Use Case JSON:</label>
-          <textarea id="json-input" spellcheck="false"></textarea>
-        </div>
-        <br />
-        <div class="btn-row">
-          <button class="btn btn-primary" id="btn-analyze" onclick="analyze()">Analyze Potential Outcomes</button>
-          <button class="btn btn-ghost" onclick="fillSample()">Sample JSON</button>
+        <!-- EXPERT ONLY: JSON textarea + analyze/sample buttons (hidden in Normal) -->
+        <div id="expert-section" style="display:none">
+          <div>
+            <label for="json-input">AI Use Case JSON:</label>
+            <textarea id="json-input" spellcheck="false"></textarea>
+          </div>
+          <br />
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-analyze" onclick="analyze()">Analyze Potential Outcomes</button>
+            <button class="btn btn-ghost" onclick="fillSample()">Sample JSON</button>
+          </div>
         </div>
 
       </div>
@@ -349,6 +407,43 @@
 <div id="toast"></div>
 
 <script>
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MODE SYSTEM
+  // currentMode: 'normal' | 'expert'
+  //
+  // Normal  → description input + single "Generate & Analyze" button only
+  //           (JSON textarea and manual analyze button are hidden)
+  //
+  // Expert  → full interface: generate JSON, edit it, then analyze manually
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  let currentMode = "normal";   // default mode
+
+  /**
+   * setMode(mode) — switches UI between Normal and Expert without a page reload.
+   * Inputs (description text, JSON content) are NEVER cleared on mode switch.
+   */
+  function setMode(mode) {
+    currentMode = mode;
+
+    // ── Toggle pill buttons active state ──────────────────────────────────
+    document.getElementById("btn-mode-normal").classList.toggle("active", mode === "normal");
+    document.getElementById("btn-mode-expert").classList.toggle("active", mode === "expert");
+
+    // ── Show/hide Normal-mode elements ────────────────────────────────────
+    document.getElementById("btn-generate-analyze").style.display = mode === "normal" ? "" : "none";
+
+    // ── Show/hide Expert-mode elements ────────────────────────────────────
+    document.getElementById("btn-generate").style.display     = mode === "expert" ? "" : "none";
+    document.getElementById("expert-section").style.display   = mode === "expert" ? "" : "none";
+
+    // ── Update the badge and subtitle in the card header ──────────────────
+    document.getElementById("mode-badge").textContent = mode === "normal" ? "Normal" : "Expert";
+    document.getElementById("card-subtitle").textContent = mode === "normal"
+      ? "Describe your AI system — one click generates and analyzes it."
+      : "Describe your AI system or provide structured JSON.";
+  }
+
   // ── Sample JSON ───────────────────────────────────────────────────────────
   const SAMPLE_JSON = {
     useCaseName: "Customer Support Chatbot",
@@ -401,16 +496,21 @@
     showToast("Sample JSON loaded.");
   }
 
-  // ── Set button loading state ──────────────────────────────────────────────
+  // ── Loading state helpers ─────────────────────────────────────────────────
+  // These lock the relevant button(s) and show spinner text during API calls.
+
+  /**
+   * setGenerateLoading — used by Expert mode's "Generate Structured JSON" button.
+   */
   function setGenerateLoading(loading) {
-    const btn = document.getElementById("btn-generate");
+    const btn      = document.getElementById("btn-generate");
     const descInput = document.getElementById("description-input");
     if (loading) {
-      btn.disabled = true;
+      btn.disabled       = true;
       descInput.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Generating structured AI definition...';
     } else {
-      btn.disabled = false;
+      btn.disabled       = false;
       descInput.disabled = false;
       btn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -420,19 +520,113 @@
     }
   }
 
-  function setAnalyzeLoading(loading) {
-    const btn = document.getElementById("btn-analyze");
+  /**
+   * setNormalLoading — used by Normal mode's "Generate & Analyze" button.
+   * Locks both the button and the description input; shows step progress text.
+   */
+  function setNormalLoading(loading, step) {
+    const btn      = document.getElementById("btn-generate-analyze");
+    const descInput = document.getElementById("description-input");
+    const messages = {
+      generate: '<span class="spinner" style="border-color:#fff;border-top-color:transparent"></span> Generating structured AI definition...',
+      analyze:  '<span class="spinner" style="border-color:#fff;border-top-color:transparent"></span> Analyzing potential outcomes...',
+    };
     if (loading) {
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="border-color:#fff;border-top-color:transparent"></span> Analyzing potential outcomes...';
-      renderLoadingState();
+      btn.disabled       = true;
+      descInput.disabled = true;
+      btn.innerHTML      = messages[step] || messages.generate;
     } else {
-      btn.disabled = false;
-      btn.textContent = "Analyze Potential Outcomes";
+      btn.disabled       = false;
+      descInput.disabled = false;
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+        </svg>
+        Generate &amp; Analyze`;
     }
   }
 
-  // ── Generate JSON ─────────────────────────────────────────────────────────
+  /**
+   * setAnalyzeLoading — used by Expert mode's "Analyze Potential Outcomes" button.
+   */
+  function setAnalyzeLoading(loading) {
+    const btn = document.getElementById("btn-analyze");
+    if (loading) {
+      btn.disabled  = true;
+      btn.innerHTML = '<span class="spinner" style="border-color:#fff;border-top-color:transparent"></span> Analyzing potential outcomes...';
+      renderLoadingState();
+    } else {
+      btn.disabled     = false;
+      btn.textContent  = "Analyze Potential Outcomes";
+    }
+  }
+
+  // ── NORMAL MODE: Generate & Analyze (chained) ─────────────────────────────
+  /**
+   * generateAndAnalyze() — Normal mode entry point.
+   * Step 1: POST /generate-json  (description → JSON)
+   * Step 2: POST /analyze        (JSON → outcome analysis)
+   * Both steps happen automatically; user only clicks once.
+   */
+  async function generateAndAnalyze() {
+    const description = document.getElementById("description-input").value;
+    if (!description.trim()) {
+      showToast("Please enter a description first.", true);
+      return;
+    }
+
+    // ── Step 1: Generate structured JSON ──────────────────────────────────
+    setNormalLoading(true, "generate");
+    renderLoadingState("Generating structured AI definition...",
+      "Converting your description into a formal JSON schema...");
+
+    let generatedJson;
+    try {
+      const res  = await fetch("/generate-json", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ description })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Generation failed.");
+
+      generatedJson = data.json;
+      // Silently store in JSON textarea (not shown in Normal mode, but available if user switches to Expert)
+      document.getElementById("json-input").value = JSON.stringify(generatedJson, null, 2);
+    } catch (err) {
+      showToast(err.message || "Generation failed. Please try again.", true);
+      setNormalLoading(false);
+      renderEmptyState();
+      return;
+    }
+
+    // ── Step 2: Analyze the generated JSON ────────────────────────────────
+    setNormalLoading(true, "analyze");
+    renderLoadingState("Analyzing potential outcomes...",
+      "The AI is projecting potential ethical, legal, and social impacts.");
+
+    try {
+      const res  = await fetch("/analyze", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(generatedJson)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Analysis failed.");
+
+      currentAnalysis = data.analysis;
+      selectedItems   = new Set();
+      renderAnalysis(data.analysis);
+      showToast("Analysis complete.");
+    } catch (err) {
+      showToast(err.message || "Analysis failed. Please try again.", true);
+      renderEmptyState();
+    } finally {
+      setNormalLoading(false);
+    }
+  }
+
+  // ── EXPERT MODE: Generate JSON only ──────────────────────────────────────
   async function generateJson() {
     const description = document.getElementById("description-input").value;
     if (!description.trim()) {
@@ -607,12 +801,16 @@
   }
 
   // ── Loading state in results column ──────────────────────────────────────
-  function renderLoadingState() {
+  // title and subtitle are optional — defaults shown when not provided.
+  function renderLoadingState(
+    title    = "Analyzing potential outcomes...",
+    subtitle = "The AI is projecting potential ethical, legal, and social impacts based on your formal definition."
+  ) {
     document.getElementById("results-col").innerHTML = `
       <div class="loading-card">
         <span class="spinner big-spinner" style="width:2.5rem;height:2.5rem;border-width:3px;color:#18181b;border-top-color:transparent"></span>
-        <p>Analyzing potential outcomes...</p>
-        <small>The AI is projecting potential ethical, legal, and social impacts based on your formal definition.</small>
+        <p>${escHtml(title)}</p>
+        <small>${escHtml(subtitle)}</small>
       </div>
     `;
   }
@@ -632,8 +830,9 @@
     `;
   }
 
-  // Initialise with empty state
-  renderEmptyState();
+  // ── Initialise page state ─────────────────────────────────────────────────
+  renderEmptyState();   // right column starts with the "Ready for Analysis" placeholder
+  setMode("normal");    // apply Normal mode visibility rules on first load
 
   // ── Copy markdown ─────────────────────────────────────────────────────────
   function copyMarkdown() {

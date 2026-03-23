@@ -1,0 +1,141 @@
+Modify my existing AI Outcome Wrapper webpage to support two modes: Normal Mode and Expert Mode.
+
+CURRENT SYSTEM:
+- User can:
+  1. Enter AI description → generate structured JSON
+  2. View/edit JSON
+  3. Analyze JSON → get categorized outcomes
+  4. See checkboxes per bullet point
+  5. Export selected outcomes
+
+GOAL:
+Introduce a mode toggle that changes how the workflow behaves, while keeping all current features intact.
+
+----------------------------------
+1. ADD MODE TOGGLE UI
+----------------------------------
+
+Add a toggle at the top of the page:
+
+Label:
+"Mode: [ Normal | Expert ]"
+
+- Default mode: Normal
+- Can be a switch or radio buttons
+- Store selected mode in a variable (e.g., currentMode)
+
+----------------------------------
+2. NORMAL MODE BEHAVIOR
+----------------------------------
+
+In Normal Mode:
+
+- User only sees:
+  - AI description input box
+  - One button: "Generate & Analyze"
+
+- When clicked:
+  1. Send description → /generate-json
+  2. Automatically take returned JSON
+  3. Immediately send it → /analyze
+  4. Display ONLY the final analysis results
+
+- DO NOT show:
+  - JSON textarea
+  - "Analyze Potential Outcomes" button
+
+- Keep:
+  - Loading messages for both steps
+  - Checkbox per bullet point
+  - Export selected outcomes button
+  - Popup modal
+
+----------------------------------
+3. EXPERT MODE BEHAVIOR
+----------------------------------
+
+In Expert Mode:
+
+- Show full existing interface:
+  - AI description input
+  - "Generate Structured JSON" button
+  - JSON textarea (editable)
+  - "Analyze Potential Outcomes" button
+
+- Behavior:
+  1. User generates JSON manually
+  2. JSON is inserted into textarea
+  3. User can edit JSON
+  4. User clicks "Analyze Potential Outcomes"
+  5. Analysis is displayed
+
+- ALSO:
+  After generating JSON, automatically run analysis once (optional but preferred for speed)
+
+----------------------------------
+4. UI VISIBILITY LOGIC
+----------------------------------
+
+- When switching modes:
+  - Show/hide elements dynamically
+
+Normal Mode:
+  - Hide JSON textarea
+  - Hide manual analyze button
+
+Expert Mode:
+  - Show everything
+
+- Do NOT reload page when switching modes
+
+----------------------------------
+5. CODE REQUIREMENTS
+----------------------------------
+
+- Use plain JavaScript (no frameworks)
+- Do NOT modify backend endpoints
+- Reuse existing fetch logic
+- Keep:
+  - Checkbox generation per bullet
+  - Export popup functionality
+  - Loading indicators
+  - Error handling
+
+----------------------------------
+6. EDGE CASES
+----------------------------------
+
+- If user switches modes:
+  - Preserve existing inputs
+  - Do not clear text or JSON
+
+- If API fails:
+  - Show error message
+  - Re-enable buttons
+
+----------------------------------
+7. OUTPUT REQUIRED
+----------------------------------
+
+Provide:
+
+- Updated index.html
+- Updated JavaScript logic
+- Clear comments explaining:
+  - Mode switching logic
+  - Visibility control
+  - Automatic chaining of API calls in Normal Mode
+
+----------------------------------
+GOAL SUMMARY:
+----------------------------------
+
+Normal Mode:
+Simple → input → one click → final analysis
+
+Expert Mode:
+Advanced → full control → JSON editing → manual analysis
+
+Keep UI clean and beginner-friendly.
+Do NOT remove any existing features.
+Only add mode-based behavior.
